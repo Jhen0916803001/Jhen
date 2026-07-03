@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>振凱房產試算計算機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f5f3ee;
+    --card: #ffffff;
+    --ink: #20242c;
+    --muted: #767a86;
+    --gold-1: #c9a24a;
+    --gold-2: #a97f22;
+    --gold-soft: #faf3e0;
+    --gold-border: #e8d9ab;
+    --line-green: #06c755;
+    --danger: #b3521e;
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image: radial-gradient(circle at 10% 0%, #fbf8f0 0%, var(--bg) 45%);
+    color: var(--ink);
+    font-family: "Noto Sans TC", -apple-system, sans-serif;
+    padding: 24px 16px 120px;
+    line-height: 1.5;
+  }
+  .wrap{ max-width: 1040px; margin: 0 auto; }
+
+  /* header */
+  .header{
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 22px 28px;
+    display:flex; align-items:center; gap:18px;
+    box-shadow: 0 1px 3px rgba(20,20,10,.05), 0 8px 24px -12px rgba(150,120,40,.15);
+    margin-bottom: 18px;
+    border: 1px solid #efe9d8;
+  }
+  .avatar{
+    width: 60px; height: 60px; border-radius: 50%;
+    object-fit: cover; object-position: top center;
+    border: 2px solid var(--gold-1);
+    flex-shrink: 0;
+  }
+  .header h1{
+    font-family: "Noto Serif TC", serif;
+    font-size: 22px;
+    font-weight: 900;
+    margin: 0;
+    letter-spacing: .02em;
+    color: #1c1f26;
+  }
+  .header p{
+    margin: 3px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* nav */
+  .tabs{
+    display:flex;
+    gap: 6px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 6px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(20,20,10,.05);
+    border: 1px solid #efe9d8;
+  }
+  .tab-btn{
+    flex: 1 1 auto;
+    min-width: 100px;
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover{ background: #f4efe0; }
+  .tab-btn.active{
+    background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+    color: #fff;
+    box-shadow: 0 4px 12px -4px rgba(169,127,34,.55);
+  }
+
+  /* panel */
+  .panel{ display:none; }
+  .panel.active{ display:block; animation: fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform: translateY(4px);} to{opacity:1; transform:none;} }
+
+  .card{
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 24px 26px;
+    margin-bottom: 16px;
+    border: 1px solid #efe9d8;
+    box-shadow: 0 1px 3px rgba(20,20,10,.04);
+  }
+  .card-title{
+    display:flex; align-items:center; gap:10px;
+    margin: 0 0 4px;
+  }
+  .card-title .bar{
+    width: 4px; height: 20px; border-radius: 2px;
+    background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  }
+  .card-title h2{ margin:0; font-size: 19px; font-weight: 700; }
+  .card-sub{ color: var(--muted); font-size: 13px; margin: 2px 0 18px 14px; }
+  .tag{
+    display:inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #eee;
+    color: #666;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .tag.gold{ background: #fbecc4; color: #8a6412; }
+  .tag.blue{ background: #dbeafe; color: #1d4ed8; }
+
+  .grid{ display:grid; gap: 16px; }
+  .grid-2{ grid-template-columns: 1fr 1fr; }
+  .grid-3{ grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 640px){ .grid-2, .grid-3{ grid-template-columns: 1fr; } }
+
+  .field label{
+    display:block; font-size: 13px; font-weight: 600; margin-bottom: 6px;
+  }
+  .field label .hint{ font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 4px;}
+  .field input, .field select{
+    width: 100%;
+    padding: 11px 12px;
+    border: 1.5px solid #e3ddc9;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fffefb;
+    color: var(--ink);
+  }
+  .field input:focus, .field select:focus{
+    outline: none;
+    border-color: var(--gold-1);
+    box-shadow: 0 0 0 3px rgba(201,162,74,.18);
+  }
+  .field.gold-bg input{ background: #fffbef; border-color: var(--gold-border); }
+  .yellow-box{
+    background: var(--gold-soft);
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .date-row{ display:flex; gap:6px; }
+  .date-row input{ text-align:center; }
+
+  .btn-toggle-row{ display:flex; gap:0; border-radius: 10px; overflow:hidden; border: 1.5px solid #e3ddc9; }
+  .btn-toggle-row button{
+    flex:1; padding: 12px 8px; border:none; background:#f4f2ec; color: var(--ink);
+    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; transition:.15s;
+  }
+  .btn-toggle-row button.active{ background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); color:#fff; }
+  .btn-toggle-row button + button{ border-left: 1.5px solid #e3ddc9; }
+
+  .switch-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background: #fbf8ef; border: 1px dashed var(--gold-border);
+    border-radius: 10px; padding: 12px 16px; margin-top: 4px;
+  }
+  .switch-row .lbl{ font-weight:700; font-size:14px; }
+  .switch-row .sub{ font-size:12px; color: var(--muted); margin-top:2px; }
+  .switch{ position:relative; width:44px; height:25px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .slider{
+    position:absolute; inset:0; background:#ccc; border-radius:999px; cursor:pointer; transition:.2s;
+  }
+  .switch .slider:before{
+    content:""; position:absolute; width:19px; height:19px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:.2s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  .switch input:checked + .slider{ background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); }
+  .switch input:checked + .slider:before{ transform: translateX(19px); }
+
+  .note-box{
+    background:#f4f2ec; border-radius:10px; padding:12px 16px; font-size:13px; color:#5c5a4f; margin-top:4px;
+  }
+
+  .result-box{
+    background: linear-gradient(150deg, #fdf7e6, #faf3de);
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 16px;
+  }
+  .result-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width:640px){ .result-grid{ grid-template-columns: 1fr; } }
+  .result-item{
+    background:#fff; border-radius: 10px; padding: 14px 16px; border: 1px solid #eee2c2;
+  }
+  .result-item .k{ font-size:12px; color: var(--muted); font-weight:600; }
+  .result-item .v{ font-size: 22px; font-weight:800; color:#1c1f26; margin-top:4px; }
+  .result-item .v span.unit{ font-size:14px; font-weight:600; color: var(--muted); }
+
+  .hero-result{
+    background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+    color:#fff; border-radius: var(--radius); padding: 20px 22px; margin-bottom: 16px;
+  }
+  .hero-result .k{ font-size:13px; font-weight:700; opacity:.92; }
+  .hero-result .v{ font-size: 34px; font-weight:900; margin-top:6px; }
+  .hero-result .v .unit{ font-size:16px; font-weight:600; }
+
+  .detail-list{ background:#fff; border-radius: 10px; border:1px solid #eee2c2; }
+  .detail-list .row{
+    display:flex; justify-content:space-between; padding: 11px 16px;
+    border-bottom: 1px solid #f2ede0; font-size: 14px;
+  }
+  .detail-list .row:last-child{ border-bottom:none; }
+  .detail-list .row.total{ font-weight:800; background:#fbf6e6; border-radius: 0 0 10px 10px; }
+  .detail-list .row .amt{ font-weight:700; }
+  .detail-list .row .amt.neg{ color: var(--danger); }
+
+  .btn-primary{
+    width:100%; padding: 14px; border:none; border-radius: 12px;
+    background:#1c1f26; color:#fff; font-family:inherit; font-size:15px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .btn-primary:hover{ background:#33363f; }
+
+  .reverse-box{
+    background:#eef4ff; border:1px solid #c9dcff; border-radius: var(--radius); padding:18px 20px; margin-top:16px;
+  }
+  .reverse-box h3{ margin:0 0 2px; font-size:15px; }
+  .reverse-box .sub{ font-size:12px; color:var(--muted); margin-bottom:10px; }
+
+  footer{
+    text-align:center; margin-top: 30px; color: var(--muted); font-size: 12px;
+  }
+
+  /* floating contact bar */
+  .contact-bar{
+    position: fixed; left:0; right:0; bottom:0;
+    display:flex; gap:10px; justify-content:center;
+    padding: 12px 16px; background: linear-gradient(0deg, var(--bg) 60%, transparent);
+  }
+  .contact-btn{
+    display:flex; align-items:center; gap:8px;
+    padding: 12px 22px; border-radius: 999px; border:none;
+    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
+    text-decoration:none; box-shadow: 0 6px 16px -6px rgba(0,0,0,.25);
+  }
+  .contact-btn.line{ background: var(--line-green); color:#fff; }
+  .contact-btn.phone{ background:#1c1f26; color:#fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <img class="avatar" src="data:image/jpeg;base64,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" alt="振凱">
+    <div>
+      <h1>振凱房產試算計算機</h1>
+      <p>買賣、貸款、稅費，一次算給你看</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="t1">📐 房地合一</button>
+    <button class="tab-btn" data-tab="t2">💼 購屋能力</button>
+    <button class="tab-btn" data-tab="t3">🏠 房貸試算</button>
+    <button class="tab-btn" data-tab="t4">🧾 買賣雜費</button>
+    <button class="tab-btn" data-tab="t5">🔄 坪數換算</button>
+    <button class="tab-btn" data-tab="t6">🚗 車位拆算</button>
+    <button class="tab-btn" data-tab="t7">💰 賣方實拿速算</button>
+  </div>
+
+  <!-- ===================== TAB 1: 房地合一 ===================== -->
+  <div class="panel active" id="t1">
+    <div class="card">
+      <div class="card-title"><span class="bar"></span><h2>房地合一</h2></div>
+      <div class="card-sub">計算個人房地合一稅</div>
+
+      <div class="grid grid-2">
+        <div class="field"><label>賣出總價 <span class="hint">萬</span></label><input type="number" id="t1_sell" placeholder="例如: 2000"></div>
+        <div class="field"><label>取得成本 <span class="hint">萬</span></label><input type="number" id="t1_cost" placeholder="例如: 1500"></div>
+        <div class="field"><label>土地漲價總數額 <span class="hint">參考土增稅單</span></label><input type="number" id="t1_land" placeholder="萬"></div>
+        <div class="field"><label>取得相關費用 <span class="hint">萬</span></label><input type="number" id="t1_fee" placeholder="買時仲介、契稅等"></div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <label style="font-size:13px;font-weight:600;">移轉費用扣除方式</label>
+        <div class="btn-toggle-row" style="margin-top:6px;">
+          <button id="t1_mode_pct" class="active">預設 3%（上限 30 萬）</button>
+          <button id="t1_mode_manual">手動輸入</button>
+        </div>
+        <div id="t1_manual_wrap" style="display:none; margin-top:10px;">
+          <input type="number" id="t1_manual_fee" placeholder="手動輸入移轉費用（萬）">
+        </div>
+        <div class="note-box" id="t1_pct_note">系統計算: 0（成交價 3%，上限 30 萬）</div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <label style="font-size:13px;font-weight:600;">持有期間</label>
+        <div class="btn-toggle-row" style="margin-top:6px;">
+          <button class="t1_hold active" data-r="0.45">2 年內</button>
+          <button class="t1_hold" data-r="0.35">2-5 年</button>
+          <button class="t1_hold" data-r="0.20">5-10 年</button>
+          <button class="t1_hold" data-r="0.15">10 年以上</button>
+        </div>
+      </div>
+
+      <div class="switch-row" style="margin-top:16px;">
+        <div>
+          <div class="lbl">自用住宅滿 6 年優惠</div>
+          <div class="sub">400 萬免稅＋超過部分 10%</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="t1_selfuse"><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="hero-result">
+      <div class="k">房地合一稅</div>
+      <div class="v" id="t1_tax">— <span class="unit">萬</span></div>
+    </div>
+    <div class="detail-list">
+      <div class="row"><span>稅基</span><span class="amt" id="t1_base">—</span></div>
+      <div class="row"><span>適用稅率</span><span class="amt" id="t1_rate">—</span></div>
+      <div class="row"><span>移轉費用</span><span class="amt" id="t1_feeused">—</span></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 2: 購屋能力 ===================== -->
+  <div class="panel" id="t2">
+    <div class="card">
+      <div class="card-title"><span class="bar"></span><h2>購屋能力</h2></div>
+      <div class="card-sub">從月收入反推可買總價（試算利率 2.3%）</div>
+
+      <div class="grid grid-2">
+        <div class="field"><label>月收入 <span class="hint">萬</span></label><input type="number" id="t2_income" placeholder="例如: 8"></div>
+        <div class="field"><label>現有自備款 <span class="hint">萬</span></label><input type="number" id="t2_down" placeholder="例如: 300"></div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <label style="font-size:13px;font-weight:600;">負債比上限（月收佔比）</label>
+        <div class="btn-toggle-row" style="margin-top:6px;">
+          <button class="t2_ratio active" data-r="0.33">保守 33%</button>
+          <button class="t2_ratio" data-r="0.50">積極 50%</button>
+          <button class="t2_ratio" data-r="0.60">緊繃 60%</button>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <label style="font-size:13px;font-weight:600;">貸款年限</label>
+        <div class="btn-toggle-row" style="margin-top:6px;">
+          <button class="t2_years" data-y="20">20 年</button>
+          <button class="t2_years active" data-y="30">30 年</button>
+        </div>
+        <div class="note-box" style="margin-top:8px;">＊試算利率以 2.3% 估計</div>
+      </div>
+    </div>
+
+    <div class="hero-result">
+      <div class="k">建議房屋總價上限</div>
+      <div class="v" id="t2_total">$— <span class="unit">萬</span></div>
+    </div>
+    <div class="detail-list">
+      <div class="row"><span>建議貸款金額</span><span class="amt" id="t2_loan">$—</span></div>
+      <div class="row"><span>每月房貸支出</span><span class="amt" id="t2_monthly">$—</span></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 3: 房貸試算 ===================== -->
+  <div class="panel" id="t3">
+    <div class="card">
+      <div class="card-title"><span class="bar"></span><h2>房貸試算</h2></div>
+      <div class="card-sub">本利均攤計算每月還款金額（支援寬限期）</div>
+      <div class="grid grid-2">
+        <div class="field"><label>貸款金額 <span class="hint">萬</span></label><input type="number" id="t3_amt" placeholder="例如: 1000"></div>
+        <div class="field"><label>年利率 <span class="hint">%</span></label><input type="number" step="0.01" id="t3_rate" placeholder="例如: 2.2"></div>
+        <div class="field"><label>貸款期限 <span class="hint">年</span></label><input type="number" id="t3_years" value="30"></div>
+        <div class="field"><label>寬限期 <span class="hint">年</span></label><input type="number" id="t3_grace" value="0"></div>
+      </div>
+    </div>
+
+    <div class="hero-result">
+      <div class="k">每月應繳（本息攤還）</div>
+      <div class="v" id="t3_monthly">$—</div>
+    </div>
+    <div class="detail-list">
+      <div class="row"><span>寬限期內每月（只繳利息）</span><span class="amt" id="t3_grace_pay">$—</span></div>
+      <div class="row"><span>總利息支出</span><span class="amt" id="t3_interest">$—</span></div>
+      <div class="row total"><span>總還款金額</span><span class="amt" id="t3_total">$—</span></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 4: 買賣雜費 ===================== -->
+  <div class="panel" id="t4">
+    <div class="card">
+      <div class="card-title"><span class="bar"></span><h2>買賣雜費</h2></div>
+      <div class="card-sub">買方 / 賣方雜費試算</div>
+
+      <div class="field"><label>成交總價 <span class="hint">萬</span></label><input type="number" id="t4_price" placeholder="例如: 1300"></div>
+
+      <div style="margin-top:16px;">
+        <label style="font-size:13px;font-weight:600;">您的身分</label>
+        <div class="btn-toggle-row" style="margin-top:6px;">
+          <button id="t4_buyer" class="active">買方 (Buyer)</button>
+          <button id="t4_seller">賣方 (Seller)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-box">
+      <div style="font-weight:700; margin-bottom:10px;" id="t4_title">買方預估雜項費用</div>
+      <div class="hero-result" style="margin-bottom:14px;">
+        <div class="k">費用總計</div>
+        <div class="v" id="t4_total">$—</div>
+      </div>
+      <div class="detail-list" id="t4_list"></div>
+    </div>
+
+    <div class="note-box">
+      【費用估算說明】買方：契稅、印花稅、地政規費、書狀費、代書費、銀行相關費用；賣方：印花稅、代書費（潤筆）、實價登錄費、塗銷費。<br>
+      ＊實際費用依房屋評定現值與代書事務所報價為主，此處僅提供概估參考。
+    </div>
+  </div>
+
+  <!-- ===================== TAB 5: 坪數換算 ===================== -->
+  <div class="panel" id="t5">
+    <div class="card">
+      <div class="card-title"><span class="bar"></span><h2>坪數換算</h2></div>
+      <div class="card-sub">坪 ⇄ 平方公尺</div>
+
+      <div class="yellow-box" style="text-align:center;">
+        <div style="font-weight:700; margin-bottom:6px;">換算公式</div>
+        <div>1 坪 = 3.30579 平方公尺</div>
+        <div>1 平方公尺 = 0.3025 坪</div>
+      </div>
+
+      <div class="grid grid-2">
+        <div class="field"><label>坪數</label><input type="number" id="t5_ping" value="0"></div>
+        <div class="field"><label>平方公尺 (m²)</label><input type="number" id="t5_sqm" value="0"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 6: 車位拆算 ===================== -->
+  <div class="panel" id="t6">
+    <div class="card">
+      <div class="card-title"><span class="bar"></span><h2>車位拆算</h2></div>
+      <div class="card-sub">實價登錄或廣告牌單常包含車位價格與坪數，此功能可算出「扣除車位後的真實房屋單價」</div>
+
+      <div class="grid grid-2">
+        <div class="field"><label>房屋總價（含車位） <span class="hint">萬</span></label><input type="number" id="t6_total_price" placeholder="例如: 2500"></div>
+        <div class="field"><label>權狀總坪數（含車位） <span class="hint">坪</span></label><input type="number" id="t6_total_ping" placeholder="例如: 50"></div>
+        <div class="field"><label>車位價格 <span class="hint">萬</span></label><input type="number" id="t6_park_price" placeholder="例如: 200"></div>
+        <div class="field"><label>車位坪數 <span class="hint">坪</span></label><input type="number" id="t6_park_ping" placeholder="例如: 10"></div>
+      </div>
+    </div>
+
+    <div class="hero-result">
+      <div class="k">扣除車位後的真實房屋單價</div>
+      <div class="v" id="t6_unit">— <span class="unit">萬/坪</span></div>
+    </div>
+    <div class="detail-list">
+      <div class="row"><span>房屋價格（扣車位）</span><span class="amt" id="t6_house_price">—萬</span></div>
+      <div class="row"><span>房屋坪數（扣車位）</span><span class="amt" id="t6_house_ping">—坪</span></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB 7: 賣方實拿速算 ===================== -->
+  <div class="panel" id="t7">
+    <div class="card">
+      <div class="card-title"><span class="bar"></span><h2>賣方實拿速算</h2></div>
+      <div class="card-sub">輸入欄位後即時計算，所有數字連動更新</div>
+
+      <div class="yellow-box">
+        <div style="font-weight:700; margin-bottom:12px;">基礎資訊 <span class="tag gold">黃色輸入</span></div>
+        <div class="grid grid-3">
+          <div class="field"><label>總坪數 <span class="hint">含車位</span></label><input type="number" id="t7_total_ping" placeholder="例如: 50.23"></div>
+          <div class="field"><label>車位坪數</label><input type="number" id="t7_park_ping" placeholder="例如: 22.16"></div>
+          <div class="field"><label>車位價格 <span class="hint">萬</span></label><input type="number" id="t7_park_price" placeholder="例如: 180"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:700; margin-bottom:12px;">取得資訊（算稅用） <span class="tag blue">課稅基礎</span></div>
+        <div class="grid grid-2">
+          <div class="field"><label>房屋取得價格 <span class="hint">萬・屋主當年買多少</span></label><input type="number" id="t7_acq_price" placeholder="例如: 1052"></div>
+          <div class="field"><label>取得相關成本 <span class="hint">萬・仲、契、印、代</span></label><input type="number" id="t7_acq_fee" placeholder="例如: 13"></div>
+        </div>
+        <div class="grid grid-2" style="margin-top:14px;">
+          <div class="field">
+            <label>前次移轉日期 <span class="hint">民國年/月/日</span></label>
+            <div class="date-row">
+              <input type="number" id="t7_prev_y" placeholder="年">
+              <input type="number" id="t7_prev_m" placeholder="月">
+              <input type="number" id="t7_prev_d" placeholder="日">
+            </div>
+          </div>
+          <div class="field">
+            <label>本次預計交易日期 <span class="hint">民國年/月/日</span></label>
+            <div class="date-row">
+              <input type="number" id="t7_next_y" placeholder="年">
+              <input type="number" id="t7_next_m" placeholder="月">
+              <input type="number" id="t7_next_d" placeholder="日">
+            </div>
+          </div>
+        </div>
+
+        <div class="switch-row" style="margin-top:14px;">
+          <div>
+            <div class="lbl">自用住宅滿 6 年優惠</div>
+            <div class="sub">勾選 → 免稅額 400 萬、超過部分 10% 稅率</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="t7_selfuse"><span class="slider"></span></label>
+        </div>
+        <div class="note-box" id="t7_hold_note" style="margin-top:10px;">請填寫兩個日期 → 自動判定持有期間與稅率</div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:700; margin-bottom:12px;">手動輸入項目 <span class="tag">查單後填入</span></div>
+        <div class="grid grid-2">
+          <div class="field"><label>土增稅 <span class="hint">萬・依稅單</span></label><input type="number" id="t7_landtax" placeholder="例如: 1.6"></div>
+          <div class="field"><label>剩餘貸款餘額 <span class="hint">萬・要還銀行的</span></label><input type="number" id="t7_loan" placeholder="例如: 840"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:700;">服務費計算方式 <span class="tag gold">影響實拿</span></div>
+        <div class="card-sub" style="margin-left:0;">賣方實際付的服務費，會從實拿扣掉</div>
+        <div class="btn-toggle-row">
+          <button id="t7_svc_pct" class="active">預設 4%</button>
+          <button id="t7_svc_manual">手動輸入</button>
+        </div>
+        <div id="t7_svc_manual_wrap" style="display:none; margin-top:10px;">
+          <input type="number" id="t7_svc_manual_val" placeholder="手動輸入服務費（萬）">
+        </div>
+        <div class="note-box" id="t7_svc_note">服務費 = 成交總價 × 4%</div>
+      </div>
+
+      <div style="margin-bottom:6px;">
+        <div style="font-weight:700;">房地合一可認列移轉費用 <span class="tag gold">影響稅基</span></div>
+        <div class="card-sub" style="margin-left:0;">算房地合一稅時可從稅基扣除的金額（抵稅用，不是真的支出）</div>
+        <div class="btn-toggle-row">
+          <button id="t7_ded_same" class="active">同服務費</button>
+          <button id="t7_ded_manual">手動輸入</button>
+          <button id="t7_ded_pct">3% 上限30萬</button>
+        </div>
+        <div id="t7_ded_manual_wrap" style="display:none; margin-top:10px;">
+          <input type="number" id="t7_ded_manual_val" placeholder="手動輸入可認列移轉費用（萬）">
+        </div>
+        <div class="note-box" id="t7_ded_note">可認列移轉費用 = 同服務費金額</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700; margin-bottom:2px;">想賣的價格 <span class="tag gold">雙向連動</span></div>
+      <div class="card-sub" style="margin-left:0;">直接輸入總價或單價，另一欄會自動算出</div>
+      <div class="grid grid-2">
+        <div class="field"><label>想賣的總價 <span class="hint">萬</span></label><input type="number" id="t7_ask_total" placeholder="例如: 1585"></div>
+        <div class="field"><label>房屋單價 <span class="hint">萬/坪・已扣車位</span></label><input type="number" id="t7_ask_unit" placeholder="例如: 50.05"></div>
+      </div>
+      <div class="note-box" style="margin-top:10px;">輸入後自動顯示「房屋價格 / 房屋坪數」</div>
+    </div>
+
+    <div class="result-box">
+      <div class="result-grid" style="margin-bottom:16px;">
+        <div class="result-item">
+          <div class="k">房屋單價（談價用）</div>
+          <div class="v" id="t7_out_unit">— <span class="unit">萬/坪</span></div>
+        </div>
+        <div class="result-item">
+          <div class="k">房地合一稅</div>
+          <div class="v" id="t7_out_tax">— <span class="unit">萬</span></div>
+        </div>
+      </div>
+      <div class="hero-result" style="margin-bottom:16px;">
+        <div class="k">屋主實拿（扣全部費用＋稅＋貸款）</div>
+        <div class="v" id="t7_out_net">— <span class="unit">萬</span></div>
+      </div>
+      <div class="detail-list" id="t7_detail_list"></div>
+    </div>
+
+    <button class="btn-primary" onclick="window.print()">🖨️ 列印 / 存 PDF 給客戶</button>
+
+    <div class="reverse-box">
+      <h3>🔵 反推賣拿：屋主說「我要拿 ___ 萬」</h3>
+      <div class="sub">輸入屋主想賣拿的金額，系統反推總價與單價應該掛多少（其他欄位需先填好）</div>
+      <input type="number" id="t7_reverse_net" placeholder="例如：屋主想拿 600 萬">
+      <div class="note-box" id="t7_reverse_result" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <footer>© 2026 振凱房產試算計算機｜僅供參考，實際金額以銀行/政府核定為準</footer>
+</div>
+
+<div class="contact-bar">
+  <a class="contact-btn line" href="https://line.me/ti/p/cfpJoXskr7" target="_blank" rel="noopener">💬 LINE 跟振凱諮詢</a>
+  <a class="contact-btn phone" href="tel:0916803001">📞 直接打電話給振凱</a>
+</div>
+
+<script>
+// ---------- helpers ----------
+function fmt(n, d){ if(n===null||n===undefined||isNaN(n)) return "—"; d = d===undefined?2:d; return Number(n).toLocaleString('en-US',{maximumFractionDigits:d, minimumFractionDigits:0}); }
+function num(id){ const v = parseFloat(document.getElementById(id).value); return isNaN(v)?0:v; }
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ================= TAB 1 =================
+let t1_mode = 'pct'; // pct | manual
+let t1_hold_rate = 0.45;
+document.getElementById('t1_mode_pct').onclick = ()=>{ t1_mode='pct'; document.getElementById('t1_mode_pct').classList.add('active'); document.getElementById('t1_mode_manual').classList.remove('active'); document.getElementById('t1_manual_wrap').style.display='none'; document.getElementById('t1_pct_note').style.display='block'; calcT1(); };
+document.getElementById('t1_mode_manual').onclick = ()=>{ t1_mode='manual'; document.getElementById('t1_mode_manual').classList.add('active'); document.getElementById('t1_mode_pct').classList.remove('active'); document.getElementById('t1_manual_wrap').style.display='block'; document.getElementById('t1_pct_note').style.display='none'; calcT1(); };
+document.querySelectorAll('.t1_hold').forEach(b=>{
+  b.onclick = ()=>{ document.querySelectorAll('.t1_hold').forEach(x=>x.classList.remove('active')); b.classList.add('active'); t1_hold_rate = parseFloat(b.dataset.r); calcT1(); };
+});
+document.getElementById('t1_selfuse').onchange = calcT1;
+['t1_sell','t1_cost','t1_land','t1_fee','t1_manual_fee'].forEach(id=>document.getElementById(id).addEventListener('input', calcT1));
+
+function calcT1(){
+  const sell = num('t1_sell'), cost = num('t1_cost'), land = num('t1_land'), fee = num('t1_fee');
+  let transferFee;
+  if(t1_mode==='pct'){ transferFee = Math.min(sell*0.03, 30); document.getElementById('t1_pct_note').textContent = `系統計算: ${fmt(transferFee,1)}（成交價 3%，上限 30 萬）`; }
+  else { transferFee = num('t1_manual_fee'); }
+
+  const base = sell - cost - land - fee - transferFee;
+  let tax, rateLabel;
+  if(document.getElementById('t1_selfuse').checked){
+    const taxable = Math.max(0, base - 400);
+    tax = taxable * 0.10;
+    rateLabel = '自用優惠：400萬免稅＋10%';
+  } else {
+    tax = Math.max(0, base) * t1_hold_rate;
+    rateLabel = (t1_hold_rate*100)+'%';
+  }
+  document.getElementById('t1_tax').innerHTML = fmt(tax,1)+' <span class="unit">萬</span>';
+  document.getElementById('t1_base').textContent = fmt(base,1)+' 萬';
+  document.getElementById('t1_rate').textContent = rateLabel;
+  document.getElementById('t1_feeused').textContent = fmt(transferFee,1)+' 萬';
+}
+calcT1();
+
+// ================= TAB 2 =================
+let t2_ratio = 0.33, t2_years = 30;
+document.querySelectorAll('.t2_ratio').forEach(b=>{ b.onclick=()=>{ document.querySelectorAll('.t2_ratio').forEach(x=>x.classList.remove('active')); b.classList.add('active'); t2_ratio=parseFloat(b.dataset.r); calcT2(); }; });
+document.querySelectorAll('.t2_years').forEach(b=>{ b.onclick=()=>{ document.querySelectorAll('.t2_years').forEach(x=>x.classList.remove('active')); b.classList.add('active'); t2_years=parseFloat(b.dataset.y); calcT2(); }; });
+['t2_income','t2_down'].forEach(id=>document.getElementById(id).addEventListener('input', calcT2));
+
+function calcT2(){
+  const income = num('t2_income'), down = num('t2_down');
+  const monthlyPay = income * t2_ratio;
+  const r = 0.023/12;
+  const n = t2_years*12;
+  let loan = 0;
+  if(monthlyPay>0){ loan = monthlyPay * (1-Math.pow(1+r,-n))/r; }
+  const total = loan + down;
+  document.getElementById('t2_total').innerHTML = '$'+fmt(total,0)+' <span class="unit">萬</span>';
+  document.getElementById('t2_loan').textContent = '$'+fmt(loan,0)+' 萬';
+  document.getElementById('t2_monthly').textContent = '$'+fmt(monthlyPay*10000,0)+' 元';
+}
+calcT2();
+
+// ================= TAB 3 =================
+['t3_amt','t3_rate','t3_years','t3_grace'].forEach(id=>document.getElementById(id).addEventListener('input', calcT3));
+function calcT3(){
+  const P = num('t3_amt'), annualRate = num('t3_rate'), years = num('t3_years')||0, grace = num('t3_grace')||0;
+  const r = annualRate/100/12;
+  const nTotal = years*12, nGrace = Math.min(grace*12, nTotal), nRepay = nTotal-nGrace;
+  const gracePay = P*r; // 只繳利息（萬）
+  let monthlyPay = 0;
+  if(nRepay>0 && r>0){ monthlyPay = P*r*Math.pow(1+r,nRepay)/(Math.pow(1+r,nRepay)-1); }
+  else if(nRepay>0){ monthlyPay = P/nRepay; }
+  const totalRepay = gracePay*nGrace + monthlyPay*nRepay; // 萬
+  const totalInterest = totalRepay - P;
+
+  document.getElementById('t3_monthly').textContent = '$'+fmt(monthlyPay*10000,0);
+  document.getElementById('t3_grace_pay').textContent = '$'+fmt(gracePay*10000,0);
+  document.getElementById('t3_interest').textContent = '$'+fmt(totalInterest*10000,0);
+  document.getElementById('t3_total').textContent = '$'+fmt(totalRepay*10000,0);
+}
+calcT3();
+
+// ================= TAB 4 =================
+let t4_role = 'buyer';
+document.getElementById('t4_buyer').onclick = ()=>{ t4_role='buyer'; document.getElementById('t4_buyer').classList.add('active'); document.getElementById('t4_seller').classList.remove('active'); calcT4(); };
+document.getElementById('t4_seller').onclick = ()=>{ t4_role='seller'; document.getElementById('t4_seller').classList.add('active'); document.getElementById('t4_buyer').classList.remove('active'); calcT4(); };
+document.getElementById('t4_price').addEventListener('input', calcT4);
+
+function calcT4(){
+  const price = num('t4_price');
+  const list = document.getElementById('t4_list');
+  list.innerHTML = '';
+  let items = [], total = 0;
+  if(t4_role==='buyer'){
+    document.getElementById('t4_title').textContent = '買方預估雜項費用';
+    items = [
+      ['契稅（推估）', price*0.012],
+      ['印花稅', price*0.001],
+      ['地政登記規費', price*0.001],
+      ['書狀費', 0.008],
+      ['代書費', 0.6],
+      ['銀行相關費用（對保／開辦／火險）', 0.5],
+    ];
+  } else {
+    document.getElementById('t4_title').textContent = '賣方預估雜項費用';
+    items = [
+      ['印花稅', price*0.001],
+      ['代書費（潤筆）', 0.1],
+      ['實價登錄費', 0.2],
+      ['塗銷費', 0.3],
+    ];
+  }
+  items.forEach(([label,val])=>{
+    total += val;
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<span>${label}</span><span class="amt">${fmt(val,2)} 萬</span>`;
+    list.appendChild(row);
+  });
+  const totalRow = document.createElement('div');
+  totalRow.className = 'row total';
+  totalRow.innerHTML = `<span>合計</span><span class="amt">${fmt(total,2)} 萬</span>`;
+  list.appendChild(totalRow);
+  document.getElementById('t4_total').textContent = price>0 ? '$'+fmt(total,2)+' 萬' : '$—';
+}
+calcT4();
+
+// ================= TAB 5 =================
+let t5_lock = false;
+document.getElementById('t5_ping').addEventListener('input', ()=>{
+  if(t5_lock) return; t5_lock = true;
+  const p = num('t5_ping');
+  document.getElementById('t5_sqm').value = p ? (p*3.30579).toFixed(2) : 0;
+  t5_lock = false;
+});
+document.getElementById('t5_sqm').addEventListener('input', ()=>{
+  if(t5_lock) return; t5_lock = true;
+  const s = num('t5_sqm');
+  document.getElementById('t5_ping').value = s ? (s*0.3025).toFixed(2) : 0;
+  t5_lock = false;
+});
+
+// ================= TAB 6 =================
+['t6_total_price','t6_total_ping','t6_park_price','t6_park_ping'].forEach(id=>document.getElementById(id).addEventListener('input', calcT6));
+function calcT6(){
+  const tp = num('t6_total_price'), tg = num('t6_total_ping'), pp = num('t6_park_price'), pg = num('t6_park_ping');
+  const housePrice = tp - pp;
+  const housePing = tg - pg;
+  const unit = housePing>0 ? housePrice/housePing : null;
+  document.getElementById('t6_unit').innerHTML = (unit!==null? fmt(unit,2):'—') + ' <span class="unit">萬/坪</span>';
+  document.getElementById('t6_house_price').textContent = fmt(housePrice,1)+' 萬';
+  document.getElementById('t6_house_ping').textContent = fmt(housePing,2)+' 坪';
+}
+calcT6();
+
+// ================= TAB 7 =================
+let t7_svc_mode = 'pct'; // pct | manual
+let t7_ded_mode = 'same'; // same | manual | pct
+let t7_ask_lock = false;
+
+document.getElementById('t7_svc_pct').onclick = ()=>{ t7_svc_mode='pct'; toggleBtns('t7_svc_pct','t7_svc_manual'); document.getElementById('t7_svc_manual_wrap').style.display='none'; calcT7(); };
+document.getElementById('t7_svc_manual').onclick = ()=>{ t7_svc_mode='manual'; toggleBtns('t7_svc_manual','t7_svc_pct'); document.getElementById('t7_svc_manual_wrap').style.display='block'; calcT7(); };
+
+document.getElementById('t7_ded_same').onclick = ()=>{ t7_ded_mode='same'; toggleBtns3('t7_ded_same'); document.getElementById('t7_ded_manual_wrap').style.display='none'; calcT7(); };
+document.getElementById('t7_ded_manual').onclick = ()=>{ t7_ded_mode='manual'; toggleBtns3('t7_ded_manual'); document.getElementById('t7_ded_manual_wrap').style.display='block'; calcT7(); };
+document.getElementById('t7_ded_pct').onclick = ()=>{ t7_ded_mode='pct'; toggleBtns3('t7_ded_pct'); document.getElementById('t7_ded_manual_wrap').style.display='none'; calcT7(); };
+
+function toggleBtns(onId, offId){ document.getElementById(onId).classList.add('active'); document.getElementById(offId).classList.remove('active'); }
+function toggleBtns3(onId){ ['t7_ded_same','t7_ded_manual','t7_ded_pct'].forEach(id=>document.getElementById(id).classList.toggle('active', id===onId)); }
+
+document.getElementById('t7_selfuse').onchange = calcT7;
+
+[
+ 't7_total_ping','t7_park_ping','t7_park_price','t7_acq_price','t7_acq_fee',
+ 't7_prev_y','t7_prev_m','t7_prev_d','t7_next_y','t7_next_m','t7_next_d',
+ 't7_landtax','t7_loan','t7_svc_manual_val','t7_ded_manual_val'
+].forEach(id=>document.getElementById(id).addEventListener('input', calcT7));
+
+document.getElementById('t7_ask_total').addEventListener('input', ()=>{
+  if(t7_ask_lock) return; t7_ask_lock = true;
+  syncT7AskFromTotal();
+  calcT7();
+  t7_ask_lock = false;
+});
+document.getElementById('t7_ask_unit').addEventListener('input', ()=>{
+  if(t7_ask_lock) return; t7_ask_lock = true;
+  syncT7AskFromUnit();
+  calcT7();
+  t7_ask_lock = false;
+});
+
+function housePingT7(){
+  return num('t7_total_ping') - num('t7_park_ping');
+}
+function syncT7AskFromTotal(){
+  const hp = housePingT7();
+  const total = num('t7_ask_total');
+  if(hp>0 && total>0){
+    const houseValue = total - num('t7_park_price');
+    document.getElementById('t7_ask_unit').value = (houseValue/hp).toFixed(2);
+  }
+}
+function syncT7AskFromUnit(){
+  const hp = housePingT7();
+  const unit = num('t7_ask_unit');
+  if(hp>0 && unit>0){
+    const total = unit*hp + num('t7_park_price');
+    document.getElementById('t7_ask_total').value = total.toFixed(1);
+  }
+}
+
+function rocDate(y,m,d){
+  if(!y || !m || !d) return null;
+  return new Date(y+1911, m-1, d);
+}
+function getHoldRate(){
+  const prev = rocDate(num('t7_prev_y'), num('t7_prev_m'), num('t7_prev_d'));
+  const next = rocDate(num('t7_next_y'), num('t7_next_m'), num('t7_next_d'));
+  if(!prev || !next || next<=prev){
+    document.getElementById('t7_hold_note').textContent = '請填寫兩個日期 → 自動判定持有期間與稅率';
+    return 0.45;
+  }
+  const years = (next-prev)/(1000*3600*24*365);
+  let rate, label;
+  if(years<=2){ rate=0.45; label='2年內（45%）'; }
+  else if(years<=5){ rate=0.35; label='2-5年（35%）'; }
+  else if(years<=10){ rate=0.20; label='5-10年（20%）'; }
+  else { rate=0.15; label='10年以上（15%）'; }
+  document.getElementById('t7_hold_note').textContent = `持有約 ${years.toFixed(1)} 年 → 適用稅率 ${label}`;
+  return rate;
+}
+
+// core forward calculation: given askTotal (萬), returns {tax, svc, net, ...}
+function computeT7(askTotal){
+  const acqPrice = num('t7_acq_price'), acqFee = num('t7_acq_fee');
+  const landTax = num('t7_landtax'), remainLoan = num('t7_loan');
+
+  // service fee
+  let svc;
+  if(t7_svc_mode==='pct'){ svc = askTotal*0.04; }
+  else { svc = num('t7_svc_manual_val'); }
+
+  // deductible transfer fee for tax base
+  let ded;
+  if(t7_ded_mode==='same'){ ded = svc; }
+  else if(t7_ded_mode==='manual'){ ded = num('t7_ded_manual_val'); }
+  else { ded = Math.min(askTotal*0.03, 30); }
+
+  const base = askTotal - acqPrice - acqFee - ded;
+  let tax;
+  const selfuse = document.getElementById('t7_selfuse').checked;
+  if(selfuse){
+    tax = Math.max(0, base-400) * 0.10;
+  } else {
+    const rate = getHoldRate();
+    tax = Math.max(0, base) * rate;
+  }
+
+  const guarantee = askTotal*0.0003; // 履保費 萬分之三
+  const notaryFee = 0.10; // 代書費 潤筆
+  const registryFee = 0.20; // 實價登錄費
+  const cancelFee = 0.60; // 塗銷費+稅籍資料
+
+  const totalDeduct = notaryFee + registryFee + guarantee + svc + cancelFee + landTax + tax + remainLoan;
+  const net = askTotal - totalDeduct;
+
+  return {tax, svc, ded, base, guarantee, notaryFee, registryFee, cancelFee, landTax, remainLoan, totalDeduct, net};
+}
+
+function calcT7(){
+  // update notes
+  if(t7_svc_mode==='pct'){ document.getElementById('t7_svc_note').textContent = '服務費 = 成交總價 × 4%'; }
+  else { document.getElementById('t7_svc_note').textContent = '服務費 = 手動輸入金額'; }
+  if(t7_ded_mode==='same'){ document.getElementById('t7_ded_note').textContent = '可認列移轉費用 = 同服務費金額'; }
+  else if(t7_ded_mode==='manual'){ document.getElementById('t7_ded_note').textContent = '可認列移轉費用 = 手動輸入金額'; }
+  else { document.getElementById('t7_ded_note').textContent = '可認列移轉費用 = 成交價 3%，上限 30 萬'; }
+  getHoldRate(); // update hold note
+
+  const askTotal = num('t7_ask_total');
+  const hp = housePingT7();
+  const unit = num('t7_ask_unit');
+
+  document.getElementById('t7_out_unit').innerHTML = (unit>0? fmt(unit,2):'—') + ' <span class="unit">萬/坪</span>';
+
+  if(askTotal<=0){
+    document.getElementById('t7_out_tax').innerHTML = '— <span class="unit">萬</span>';
+    document.getElementById('t7_out_net').innerHTML = '— <span class="unit">萬</span>';
+    document.getElementById('t7_detail_list').innerHTML = '';
+    return;
+  }
+
+  const r = computeT7(askTotal);
+  document.getElementById('t7_out_tax').innerHTML = fmt(r.tax,1) + ' <span class="unit">萬</span>';
+  document.getElementById('t7_out_net').innerHTML = fmt(r.net,1) + ' <span class="unit">萬</span>';
+
+  const list = document.getElementById('t7_detail_list');
+  const rows = [
+    ['代書費（潤筆）', r.notaryFee],
+    ['實價登錄費', r.registryFee],
+    ['履保費（成交價 × 萬分之三）', r.guarantee],
+    ['服務費', r.svc],
+    ['塗銷費＋稅籍資料', r.cancelFee],
+    ['土增稅', r.landTax],
+    ['房地合一稅', r.tax],
+    ['剩餘貸款', r.remainLoan],
+  ];
+  list.innerHTML = rows.map(([l,v])=>`<div class="row"><span>${l}</span><span class="amt neg">− ${fmt(v,2)} 萬</span></div>`).join('')
+    + `<div class="row total"><span>合計扣除</span><span class="amt">${fmt(r.totalDeduct,2)} 萬</span></div>`;
+}
+
+// reverse calc via bisection
+document.getElementById('t7_reverse_net').addEventListener('input', ()=>{
+  const target = num('t7_reverse_net');
+  const box = document.getElementById('t7_reverse_result');
+  if(target<=0){ box.textContent=''; return; }
+  let lo = 0, hi = 500000;
+  for(let i=0;i<80;i++){
+    const mid = (lo+hi)/2;
+    const r = computeT7(mid);
+    if(r.net < target) lo = mid; else hi = mid;
+  }
+  const price = (lo+hi)/2;
+  const hp = housePingT7();
+  const houseValue = price - num('t7_park_price');
+  const unit = hp>0 ? houseValue/hp : null;
+  box.innerHTML = `總價約需 <b>${fmt(price,1)} 萬</b>` + (unit? `，房屋單價約 <b>${fmt(unit,2)} 萬/坪</b>`:'') + `（其他費用依目前欄位設定計算）`;
+});
+
+calcT7();
+</script>
+</body>
+</html>
